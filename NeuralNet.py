@@ -3,15 +3,18 @@ Artificial Neural Network Code v1.0  (Feed-forward neural network)
 
 By:  Rui Nian
 
-Date of last edit: December 27th, 2018
+Date of last edit: December 28th, 2018
 
 Patch notes: -
 
 Known issues: -
 
 Features:  normalization, shuffle, prec, recall, testing
-"""
 
+To add:  He initialization, drop out, regularization
+To test: Load labeled_data.csv, remove shuffle, feed t and t - 1, pickle in min_max_normalization, restore graph,
+         uncomment test
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -54,38 +57,60 @@ class MinMaxNormalization:
         self.denominator = abs(self.col_max - self.col_min)
 
         # Fix divide by zero, replace value with 1 because these usually happen for boolean columns
-        for index, value in enumerate(self.denominator):
-            if value[0] == 0:
-                self.denominator[index] = 1
+        for index, value in enumerate(self.denominator[0]):
+            if value == 0:
+                self.denominator[0][index] = 1
 
     def __call__(self, data):
         return np.divide((data - self.col_min), self.denominator)
 
 
-df = pd.read_csv("test_datasets/breast-cancer-wisconsin.data.txt")
-# Remove missing values
-df.replace('?', np.nan, inplace=True)
-df.dropna(inplace=True)
+# Load data
+path = '/Users/ruinian/Documents/Logistic_Reg_TF/'
+# path = '/home/rui/Documents/logistic_regression_tf'
 
-# Remove ID column
-df.drop(['id'], axis=1, inplace=True)
-df.iloc[:, 5] = pd.to_numeric(df.iloc[:, 5])
+raw_data = pd.read_csv(path + 'data/syn_10_data.csv', header=None)
+# raw_data = pd.read_csv(path + 'data/labeled_data.csv', header=None)
 
-# Replace labels booleans column with 0 and 1
-df.loc[:, 'class'].replace(2, 0, inplace=True)
-df.loc[:, 'class'].replace(4, 1, inplace=True)
+# Get all feature names
+feature_names = list(raw_data)
 
-# Sort labels, with minority class on top
-df.sort_values(['class'], ascending=False, inplace=True)
-df.reset_index(drop=True, inplace=True)
-df = df.values
-np.random.shuffle(df)
+# Delete the label column name
+del feature_names[0]
 
-features = df[:, 0:-1]
-labels = df[:, -1].reshape(features.shape[0], 1)
+# Turn pandas dataframe into NumPy array
+raw_data = raw_data.values
+np.random.shuffle(raw_data)
+print("Raw data has {} features and {} examples.".format(raw_data.shape[1], raw_data.shape[0]))
 
-min_max_normalization = MinMaxNormalization(features)
-features = min_max_normalization(features)
+# Features and labels split
+features = raw_data[:, 1:]
+labels = raw_data[:, 0].reshape(features.shape[0], 1)
+
+train_size = 0.9
+train_index = int(train_size * raw_data.shape[0])
+
+train_X = features[0:train_index, :]
+train_y = labels[0:train_index]
+
+test_X = features[train_index:, :]
+test_y = labels[train_index:]
+
+"""
+To feed t and t - 1
+"""
+# train_X = np.concatenate([train_X[:-1, :], train_X[1:, :]], axis=1)
+# train_y = train_y[:-1, :]
+#
+# test_X = np.concatenate([test_X[:-1, :], test_X[1:, :]], axis=1)
+# test_y = test_y[:-1, :]
+
+min_max_normalization = MinMaxNormalization(train_X)
+train_X = min_max_normalization(train_X)
+test_X = min_max_normalization(test_X)
+
+assert(not np.isnan(train_X).any())
+assert(not np.isnan(test_X).any())
 
 input_size = features.shape[1]
 nodes_h1 = 20
@@ -93,8 +118,8 @@ nodes_h2 = 20
 nodes_h3 = 20
 output_size = 1
 
-batch_size = 32
-total_batch_number = int(features.shape[0] / batch_size)
+batch_size = 256
+total_batch_number = int(train_X.shape[0] / batch_size)
 
 X = tf.placeholder(dtype=tf.float32, shape=[None, input_size])
 y = tf.placeholder(dtype=tf.float32, shape=[None, output_size])
@@ -145,7 +170,7 @@ recall, recall_ops = tf.metrics.recall(labels=y, predictions=pred)
 init = tf.global_variables_initializer()
 init_l = tf.local_variables_initializer()
 
-epochs = 1000
+epochs = 5
 loss_history = []
 
 saver = tf.train.Saver()
@@ -161,8 +186,8 @@ with tf.Session() as sess:
 
         for i in range(total_batch_number):
             batch_index = i * batch_size
-            batch_X = features[batch_index:batch_index + batch_size, :]
-            batch_y = labels[batch_index:batch_index + batch_size, :]
+            batch_X = train_X[batch_index:batch_index + batch_size, :]
+            batch_y = train_y[batch_index:batch_index + batch_size, :]
 
             sess.run(optimizer, feed_dict={X: batch_X, y: batch_y})
             current_loss = sess.run(loss, feed_dict={X: batch_X, y: batch_y})
