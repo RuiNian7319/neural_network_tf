@@ -9,9 +9,11 @@ Patch notes: -
 
 Known issues: -
 
-Features:  normalization, shuffle, prec, recall, testing
+Features:  Normalization, Shuffle, Precision, Recall, He init, L2 Regularization, Drop out, batch normalization
+notes: for batch norm, batch size has to be identical, also, add is_train=True to feed dict
 
-To add:  He initialization, drop out, regularization
+To add:  proper testing proecedure, batch normalization
+
 To test: Load labeled_data.csv, remove shuffle, feed t and t - 1, pickle in min_max_normalization, restore graph,
          uncomment test
 """
@@ -66,11 +68,11 @@ class MinMaxNormalization:
 
 
 # Load data
-path = '/Users/ruinian/Documents/Logistic_Reg_TF/'
-# path = '/home/rui/Documents/logistic_regression_tf'
+path = '/Users/ruinian/Documents/logistic_regression_tf/'
+# path = '/home/rui/Documents/logistic_regression_tf/'
 
 raw_data = pd.read_csv(path + 'data/syn_10_data.csv', header=None)
-# raw_data = pd.read_csv(path + 'data/labeled_data.csv', header=None)
+# raw_data = pd.read_csv(path + 'data/labeled_data.csv')
 
 # Get all feature names
 feature_names = list(raw_data)
@@ -106,57 +108,92 @@ To feed t and t - 1
 # test_y = test_y[:-1, :]
 
 min_max_normalization = MinMaxNormalization(train_X)
+# pickle_in = open('norm.pickle', 'rb')
+# min_max_normalization = pickle.load(pickle_in)
 train_X = min_max_normalization(train_X)
 test_X = min_max_normalization(test_X)
+features = min_max_normalization(features)
 
 assert(not np.isnan(train_X).any())
 assert(not np.isnan(test_X).any())
 
-input_size = features.shape[1]
-nodes_h1 = 20
-nodes_h2 = 20
-nodes_h3 = 20
+input_size = train_X.shape[1]
+nodes_h1 = 35
+nodes_h2 = 35
+nodes_h3 = 35
+nodes_h4 = 35
+nodes_h5 = 35
+
 output_size = 1
 
-batch_size = 256
+batch_size = 512
 total_batch_number = int(train_X.shape[0] / batch_size)
 
 X = tf.placeholder(dtype=tf.float32, shape=[None, input_size])
 y = tf.placeholder(dtype=tf.float32, shape=[None, output_size])
 
+# Batch Normalization
+# is_train = tf.placeholder(tf.bool, name='is_train')
+
 hidden_layer_1 = {'weights': tf.get_variable('h1_weights', shape=[input_size, nodes_h1],
-                                             initializer=tf.contrib.layers.xavier_initializer()),
+                                             initializer=tf.contrib.layers.variance_scaling_initializer()),
                   'biases': tf.get_variable('h1_biases', shape=[nodes_h1],
-                                            initializer=tf.contrib.layers.xavier_initializer())}
+                                            initializer=tf.contrib.layers.variance_scaling_initializer())}
 
 hidden_layer_2 = {'weights': tf.get_variable('h2_weights', shape=[nodes_h1, nodes_h2],
-                                             initializer=tf.contrib.layers.xavier_initializer()),
+                                             initializer=tf.contrib.layers.variance_scaling_initializer()),
                   'biases': tf.get_variable('h2_biases', shape=[nodes_h2],
-                                            initializer=tf.contrib.layers.xavier_initializer())}
+                                            initializer=tf.contrib.layers.variance_scaling_initializer())}
 
 hidden_layer_3 = {'weights': tf.get_variable('h3_weights', shape=[nodes_h2, nodes_h3],
-                                             initializer=tf.contrib.layers.xavier_initializer()),
+                                             initializer=tf.contrib.layers.variance_scaling_initializer()),
                   'biases': tf.get_variable('h3_biases', shape=[nodes_h3],
-                                            initializer=tf.contrib.layers.xavier_initializer())}
+                                            initializer=tf.contrib.layers.variance_scaling_initializer())}
 
-output_layer = {'weights': tf.get_variable('output_weights', shape=[nodes_h3, output_size],
-                                           initializer=tf.contrib.layers.xavier_initializer()),
+hidden_layer_4 = {'weights': tf.get_variable('h4_weights', shape=[nodes_h3, nodes_h4],
+                                             initializer=tf.contrib.layers.variance_scaling_initializer()),
+                  'biases': tf.get_variable('h4_biases', shape=[nodes_h4],
+                                            initializer=tf.contrib.layers.variance_scaling_initializer())}
+
+hidden_layer_5 = {'weights': tf.get_variable('h5_weights', shape=[nodes_h4, nodes_h5],
+                                             initializer=tf.contrib.layers.variance_scaling_initializer()),
+                  'biases': tf.get_variable('h5_biases', shape=[nodes_h5],
+                                            initializer=tf.contrib.layers.variance_scaling_initializer())}
+
+output_layer = {'weights': tf.get_variable('output_weights', shape=[nodes_h5, output_size],
+                                           initializer=tf.contrib.layers.variance_scaling_initializer()),
                 'biases': tf.get_variable('output_biases', shape=[output_size],
-                                          initializer=tf.contrib.layers.xavier_initializer())}
+                                          initializer=tf.contrib.layers.variance_scaling_initializer())}
+
+# drop_out_prob = 0.2
 
 l1 = tf.add(tf.matmul(X, hidden_layer_1['weights']), hidden_layer_1['biases'])
 l1 = tf.nn.relu(l1)
+# l1 = tf.nn.dropout(l1, keep_prob=drop_out_prob)
+# l1 = tf.layers.batch_normalization(l1, training=is_train)
 
 l2 = tf.add(tf.matmul(l1, hidden_layer_2['weights']), hidden_layer_2['biases'])
 l2 = tf.nn.relu(l2)
+# l2 = tf.nn.dropout(l2, keep_prob=drop_out_prob)
+# l2 = tf.layers.batch_normalization(l2, training=is_train)
 
 l3 = tf.add(tf.matmul(l2, hidden_layer_3['weights']), hidden_layer_3['biases'])
 l3 = tf.nn.relu(l3)
+# l3 = tf.nn.dropout(l3, keep_prob=drop_out_prob)
+# l3 = tf.layers.batch_normalization(l3, training=is_train)
 
 output = tf.add(tf.matmul(l3, output_layer['weights']), output_layer['biases'])
 
-loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=y))
+# L2 Regularization
+lambd = 0.000
+trainable_vars = tf.trainable_variables()
+lossL2 = tf.add_n([tf.nn.l2_loss(v) for v in trainable_vars if 'bias' not in v.name]) * lambd
 
+loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=y) + lossL2)
+
+# Batch Normalization
+# update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+# with tf.control_dependencies(update_ops):
 optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
 
 # For output of 0 or 1
@@ -170,7 +207,7 @@ recall, recall_ops = tf.metrics.recall(labels=y, predictions=pred)
 init = tf.global_variables_initializer()
 init_l = tf.local_variables_initializer()
 
-epochs = 5
+epochs = 100
 loss_history = []
 
 saver = tf.train.Saver()
@@ -193,14 +230,16 @@ with tf.Session() as sess:
             current_loss = sess.run(loss, feed_dict={X: batch_X, y: batch_y})
             loss_history.append(current_loss)
 
-            if i % 18 == 0 and i != 0:
-                Acc = sess.run(accuracy, feed_dict={X: batch_X, y: batch_y})
-                Prec, Recall = sess.run([prec_ops, recall_ops], feed_dict={X: batch_X, y: batch_y})
-                print('Acc: {:5f} | Prec: {:5f} | Recall: {:5f}'.format(Acc, Prec, Recall))
+            if i % 50 == 0 and i != 0:
+                train_acc = sess.run(accuracy, feed_dict={X: train_X, y: train_y})
+                test_acc = sess.run(accuracy, feed_dict={X: test_X, y: test_y})
+                Prec, Recall = sess.run([prec_ops, recall_ops], feed_dict={X: features, y: labels})
+                print('Epoch: {} | Loss: {:5f} | Train_Acc: {:5f} | Test_Acc {:5f} | Prec: {:5f} | Recall: {:5f}'
+                      .format(epoch, current_loss, train_acc, test_acc, Prec, Recall))
 
-            # predictions = sess.run(pred, feed_dict={X: batch_X, y: batch_y})
-            # Acc = sess.run(accuracy, feed_dict={X: features, y: labels})
-            # Prec, Recall = sess.run([prec_ops, recall_ops], feed_dict={X: features, y: labels})
+            # predictions = sess.run(pred, feed_dict={X: train_X, y: train_y})
+            # Acc = sess.run(accuracy, feed_dict={X: train_X, y: train_y})
+            # Prec, Recall = sess.run([prec_ops, recall_ops], feed_dict={X: train_X, y: train_y})
             # print('Acc: {:5f} | Prec: {:5f} | Recall: {:5f}'.format(Acc, Prec, Recall))
             # break
 
