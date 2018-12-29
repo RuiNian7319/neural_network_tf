@@ -13,7 +13,7 @@ def suncor_early_pred(predictions, labels, early_window, num_of_events, threshol
               threshold:  Threshold for rounding a number up
 
         To use: recall_overall, precision, not_detected, misfired, detection_list = \
-                suncor_early_pred(predictions, train_y, 100, 47, 0.7)
+                suncor_early_pred(predictions, train_y, 100, 47, 0.5)
     """
     # Convert to boolean
     predictions = np.round(predictions + 0.5 - threshold)
@@ -49,7 +49,5 @@ def suncor_early_pred(predictions, labels, early_window, num_of_events, threshol
                 misfired.append(i)
 
     precision = detected / (error + detected)
-
-    print(xi)
 
     return recall_overall, precision, not_detected, misfired, did_detect
