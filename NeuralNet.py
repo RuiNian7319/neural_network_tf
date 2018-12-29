@@ -71,7 +71,7 @@ class MinMaxNormalization:
 path = '/Users/ruinian/Documents/Willowglen/'
 # path = '/home/rui/Documents/logistic_regression_tf/'
 
-# raw_data = pd.read_csv(path + 'data/10_data_plc_12.csv', header=None)
+# raw_data = pd.read_csv(path + 'data/syn_10_data_12.csv', header=None)
 raw_data = pd.read_csv(path + 'data/labeled_data.csv')
 
 # Get all feature names
@@ -89,7 +89,7 @@ print("Raw data has {} features and {} examples.".format(raw_data.shape[1], raw_
 features = raw_data[:, 1:]
 labels = raw_data[:, 0].reshape(features.shape[0], 1)
 
-train_size = 0.9
+train_size = 1
 train_index = int(train_size * raw_data.shape[0])
 
 train_X = features[0:train_index, :]
@@ -125,7 +125,7 @@ nodes_h5 = 35
 
 output_size = 1
 
-batch_size = 16
+batch_size = 32
 total_batch_number = int(train_X.shape[0] / batch_size)
 
 X = tf.placeholder(dtype=tf.float32, shape=[None, input_size])
