@@ -24,6 +24,8 @@ import pandas as pd
 import tensorflow as tf
 import pickle
 
+from suncor_ts_tester import suncor_early_pred
+
 import gc
 
 from copy import deepcopy
@@ -71,7 +73,7 @@ class MinMaxNormalization:
 path = '/Users/ruinian/Documents/Willowglen/'
 # path = '/home/rui/Documents/logistic_regression_tf/'
 
-# raw_data = pd.read_csv(path + 'data/syn_10_data_12.csv', header=None)
+# raw_data = pd.read_csv(path + 'data/10_data_plc_12.csv', header=None)
 raw_data = pd.read_csv(path + 'data/labeled_data.csv')
 
 # Get all feature names
@@ -108,7 +110,7 @@ test_X = np.concatenate([test_X[:-1, :], test_X[1:, :]], axis=1)
 test_y = test_y[:-1, :]
 
 # min_max_normalization = MinMaxNormalization(train_X)
-pickle_in = open('norm.pickle', 'rb')
+pickle_in = open(path + 'neural_net_tf/pickles/norm.pickle', 'rb')
 min_max_normalization = pickle.load(pickle_in)
 train_X = min_max_normalization(train_X)
 test_X = min_max_normalization(test_X)
@@ -125,7 +127,7 @@ nodes_h5 = 35
 
 output_size = 1
 
-batch_size = 32
+batch_size = 16
 total_batch_number = int(train_X.shape[0] / batch_size)
 
 X = tf.placeholder(dtype=tf.float32, shape=[None, input_size])
@@ -214,7 +216,7 @@ saver = tf.train.Saver()
 
 with tf.Session() as sess:
 
-    saver.restore(sess, 'checkpoints/test.ckpt')
+    saver.restore(sess, path + 'neural_network_tf/checkpoints/test.ckpt')
 
     # sess.run(init)
     sess.run(init_l)
@@ -230,7 +232,7 @@ with tf.Session() as sess:
             current_loss = sess.run(loss, feed_dict={X: batch_X, y: batch_y, is_train: training})
             loss_history.append(current_loss)
 
-            if i % 15 == 0 and i != 0:
+            if i % 8 == 0 and i != 0:
                 train_acc = sess.run(accuracy, feed_dict={X: train_X, y: train_y, is_train: training})
                 test_acc = sess.run(accuracy, feed_dict={X: test_X, y: test_y, is_train: training})
                 Prec, Recall = sess.run([prec_ops, recall_ops], feed_dict={X: np.concatenate([train_X, test_X], axis=0),
@@ -248,4 +250,4 @@ with tf.Session() as sess:
             print('Acc: {:5f} | Prec: {:5f} | Recall: {:5f}'.format(Acc, Prec, Recall))
             break
 
-    saver.save(sess, 'checkpoints/test.ckpt')
+    saver.save(sess, path + 'neural_net_tf/checkpoints/test.ckpt')
