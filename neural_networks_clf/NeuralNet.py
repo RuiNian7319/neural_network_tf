@@ -35,6 +35,10 @@ import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
+seed = 5
+np.random.seed(seed)
+tf.set_random_seed(seed)
+
 
 # Min max normalization
 class MinMaxNormalization:
@@ -73,7 +77,7 @@ class MinMaxNormalization:
 path = '/Users/ruinian/Documents/Willowglen/'
 # path = '/home/rui/Documents/logistic_regression_tf/'
 
-# raw_data = pd.read_csv(path + 'data/10_data_plc_20.csv', header=None)
+# raw_data = pd.read_csv(path + 'data/10_data_12.csv', header=None)
 raw_data = pd.read_csv(path + 'data/labeled_data.csv')
 
 # Get all feature names
@@ -91,7 +95,8 @@ print("Raw data has {} features and {} examples.".format(raw_data.shape[1], raw_
 features = raw_data[:, 1:]
 labels = raw_data[:, 0].reshape(features.shape[0], 1)
 
-train_size = 1.0
+train_size = 1
+assert(train_size <= 1)
 train_index = int(train_size * raw_data.shape[0])
 
 train_X = features[0:train_index, :]
@@ -230,7 +235,7 @@ with tf.Session() as sess:
 
             sess.run(optimizer, feed_dict={X: batch_X, y: batch_y, is_train: training})
 
-            if i % int(total_batch_number / 3) == 0 and i != 0:
+            if i % int(total_batch_number / 2) == 0 and i != 0:
                 train_acc = sess.run(accuracy, feed_dict={X: train_X, y: train_y, is_train: training})
                 test_acc = sess.run(accuracy, feed_dict={X: test_X, y: test_y, is_train: training})
                 Prec, Recall = sess.run([prec_ops, recall_ops], feed_dict={X: np.concatenate([train_X, test_X], axis=0),
@@ -252,4 +257,4 @@ with tf.Session() as sess:
             print('Acc: {:5f} | Prec: {:5f} | Recall: {:5f}'.format(Acc, Prec, Recall))
             break
 
-    saver.save(sess, path + 'neural_net_tf/checkpoints/test.ckpt')
+    # saver.save(sess, path + 'neural_net_tf/checkpoints/test.ckpt')
