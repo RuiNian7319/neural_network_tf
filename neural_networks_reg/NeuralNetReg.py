@@ -7,6 +7,7 @@ Date of last edit: January 2nd, 2018
 
 Patch Notes: Added RMSE, R2
              Added Train / Test Accuracy during runtime
+             Added Live evaluation with batch normalization
 
 Known Issues: -
 
