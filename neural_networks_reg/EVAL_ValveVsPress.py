@@ -5,12 +5,6 @@ Pressure Ratio
 By: Rui Nian
 
 Last Edit:  January 3rd, 2018
-
-Methods:
-    limit_adder: Plots the valve position vs. pressure ratio, and then plots the most probable outcome using
-                 the neural network.  Then, the upper and lower limits will be plotted.
-     live_plots: Plots the pressure ratio as a function of time on the top plot and the valve position with the top and
-                 bottom limits on the bottom plot.  Any points outside the band is considered anomalous
 """
 
 import numpy as np
@@ -20,6 +14,14 @@ import gc
 
 
 class ValvePresEval:
+    """
+    Methods:
+    ----
+      limit_adder: Plots the valve position vs. pressure ratio, and then plots the most probable outcome using
+                   the neural network.  Then, the upper and lower limits will be plotted.
+       live_plots: Plots the pressure ratio as a function of time on the top plot and the valve position with the top and
+                   bottom limits on the bottom plot.  Any points outside the band is considered anomalous
+    """
 
     def __init__(self, x, predictions, axis='pressure'):
         """
@@ -134,12 +136,18 @@ class ValvePresEval:
         plt.ylabel('Pressure Ratio')
         plt.scatter(time_axis, pres_ratio[time_start:time_end], color='blue')
 
+        plt.ylim([0, 1])
+
         plt.subplot(2, 1, 2)
+
         plt.title('Valve Position')
         plt.xlabel('Time')
-        plt.ylabel('Pressure Ratio')
+        plt.ylabel('Valve_Position')
+
         plt.scatter(time_axis, valve_pos[time_start:time_end], color='green')
         plt.scatter(time_axis, self.upper[time_start:time_end], color='red')
         plt.scatter(time_axis, self.lower[time_start:time_end], color='red')
+
+        plt.ylim([0, 60])
 
         plt.show()

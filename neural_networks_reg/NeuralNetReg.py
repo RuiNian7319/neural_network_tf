@@ -246,3 +246,6 @@ with tf.Session() as sess:
 
     # Unnormalize the features
     overall_X = min_max_normalization.unnormalize(overall_X)
+
+Online_Eval = ValvePresEval(overall_X, predictions)
+Online_Eval.live_plots(overall_X, overall_y, time_start=500000, time_end=510000)
