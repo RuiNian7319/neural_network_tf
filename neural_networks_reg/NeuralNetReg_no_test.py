@@ -78,7 +78,7 @@ class MinMaxNormalization:
 # path = '/Users/ruinian/Documents/Willowglen/valve_pressure_data/'
 path = '/home/rui/Documents/Willowglen/'
 
-raw_data = pd.read_csv(path + 'valve_pressure_data/valve_pressure_data_omit_all_outliers.csv')
+raw_data = pd.read_csv(path + 'valve_pressure_data/valve_pressure_data.csv')
 raw_data.sort_values(by=['175642874_630'], inplace=True)
 raw_data = raw_data.values
 
@@ -95,10 +95,10 @@ train_y = train_y.reshape(-1, 1)
 test_y = test_y.reshape(-1, 1)
 
 # Normalization of input space
-# pickle_in = open(path + 'neural_net_tf/pickles/norm_reg.pickle', 'rb')
-# min_max_normalization = pickle.load(pickle_in)
+pickle_in = open(path + 'neural_net_tf/pickles/norm_reg.pickle', 'rb')
+min_max_normalization = pickle.load(pickle_in)
 
-min_max_normalization = MinMaxNormalization(train_X)
+# min_max_normalization = MinMaxNormalization(train_X)
 train_X = min_max_normalization(train_X)
 test_X = min_max_normalization(test_X)
 
@@ -108,14 +108,14 @@ h2_nodes = 30
 h3_nodes = 30
 output_size = 1
 
-batch_size = 2048
+batch_size = 256
 total_batch_number = int(train_X.shape[0] / batch_size)
 
 X = tf.placeholder(dtype=tf.float32, shape=[None, input_size])
 y = tf.placeholder(dtype=tf.float32, shape=[None, output_size])
 
 # Batch normalization
-training = True
+training = False
 is_train = tf.placeholder(dtype=tf.bool, name='is_train')
 
 hidden_layer_1 = {'weights': tf.get_variable('h1_weights', shape=[input_size, h1_nodes],
@@ -172,70 +172,69 @@ R2 = 1 - np.divide(MSE, Syy)
 
 init = tf.global_variables_initializer()
 
-epochs = 25
+epochs = 1
 loss_history = []
 
 saver = tf.train.Saver()
 
 with tf.Session() as sess:
 
-    # saver.restore(sess, path + 'neural_net_tf/checkpoints/test_reg.ckpt')
+    saver.restore(sess, path + 'neural_net_tf/checkpoints/test_reg_no_test.ckpt')
 
-    sess.run(init)
+    # sess.run(init)
 
-    for epoch in range(epochs):
-
-        for i in range(total_batch_number + 1):
-
-            # If the batch size is too big for the last bit of data
-            if i == total_batch_number:
-                batch_X = train_X[i * batch_size:, :]
-                batch_y = train_y[i * batch_size:, :]
-            else:
-                batch_index = i * batch_size
-                batch_X = train_X[batch_index:batch_index + batch_size, :]
-                batch_y = train_y[batch_index:batch_index + batch_size, :]
-
-            sess.run(optimizer, feed_dict={X: batch_X, y: batch_y, is_train: training})
-            current_loss = sess.run(loss, feed_dict={X: batch_X, y: batch_y, is_train: training})
-            loss_history.append(current_loss)
-
-            if i % 100 == 0:
-                train_RMSE = sess.run(RMSE, feed_dict={X: train_X, y: train_y, is_train: training})
-                test_RMSE = sess.run(RMSE, feed_dict={X: test_X, y: test_y, is_train: training})
-                print('Epoch: {} | Loss: {:5f} | Train RMSE: {:5f} | Test RMSE: {:5f}'.format(epoch, current_loss,
-                                                                                              train_RMSE, test_RMSE))
+    # for epoch in range(epochs):
+    #
+    #     for i in range(total_batch_number + 1):
+    #
+    #         # If the batch size is too big for the last bit of data
+    #         if i == total_batch_number:
+    #             batch_X = train_X[i * batch_size:, :]
+    #             batch_y = train_y[i * batch_size:, :]
+    #         else:
+    #             batch_index = i * batch_size
+    #             batch_X = train_X[batch_index:batch_index + batch_size, :]
+    #             batch_y = train_y[batch_index:batch_index + batch_size, :]
+    #
+    #         sess.run(optimizer, feed_dict={X: batch_X, y: batch_y, is_train: training})
+    #         current_loss = sess.run(loss, feed_dict={X: batch_X, y: batch_y, is_train: training})
+    #         loss_history.append(current_loss)
+    #
+    #         if i % 100 == 0:
+    #             train_RMSE = sess.run(RMSE, feed_dict={X: train_X, y: train_y, is_train: training})
+    #             # test_RMSE = sess.run(RMSE, feed_dict={X: test_X, y: test_y, is_train: training})
+    #             print('Epoch: {} | Loss: {:5f} | Train RMSE: {:5f}'.format(epoch, current_loss, train_RMSE))
 
     # Save Model
-    saver.save(sess, path + 'neural_net_tf/checkpoints/test_reg_no_test.ckpt')
+    # saver.save(sess, path + 'neural_net_tf/checkpoints/test_reg_no_test.ckpt')
 
     # Overall performance metrics
     overall_X = raw_data[:, 1].reshape(-1, 1)
     overall_X = min_max_normalization(overall_X)
     overall_y = raw_data[:, 0].reshape(-1, 1)
 
-    predictions = sess.run(output, feed_dict={X: overall_X, y: overall_y,
-                                              is_train: training})
+    # predictions = sess.run(output, feed_dict={X: overall_X, y: overall_y,
+    #                                           is_train: training})
 
     # Evaluation, broken into pieces because of batch normalization
-    # predictions = tf.constant([], shape=(0, 1))
-    # for i in range(int(raw_data.shape[0] / batch_size) + 1):
-    #
-    #     # If the batch size is too big for the last bit of data
-    #     if i == (int(raw_data.shape[0] / batch_size)):
-    #         batch_X = overall_X[i * batch_size:, :]
-    #         batch_y = overall_y[i * batch_size:, :]
-    #
-    #     else:
-    #         batch_index = i * batch_size
-    #         batch_X = overall_X[batch_index:batch_index + batch_size, :]
-    #         batch_y = overall_y[batch_index:batch_index + batch_size, :]
-    #
-    #     prediction = sess.run(output, feed_dict={X: batch_X, y: batch_y,
-    #                                              is_train: training})
-    #     predictions = tf.concat([predictions, prediction], axis=0)
-    #
-    # predictions = sess.run(predictions)
+    predictions = tf.constant([], shape=(0, 1))
+    for i in range(int(raw_data.shape[0] / batch_size) + 1):
+
+        # If the batch size is too big for the last bit of data
+        if i == (int(raw_data.shape[0] / batch_size)):
+            batch_X = overall_X[i * batch_size:, :]
+            batch_y = overall_y[i * batch_size:, :]
+
+        else:
+            batch_index = i * batch_size
+            batch_X = overall_X[batch_index:batch_index + batch_size, :]
+            batch_y = overall_y[batch_index:batch_index + batch_size, :]
+
+        prediction = sess.run(output, feed_dict={X: batch_X, y: batch_y,
+                                                 is_train: training})
+        predictions = tf.concat([predictions, prediction], axis=0)
+
+    predictions = sess.run(predictions)
 
     print('Overall R2: {:5f} | Overall RMSE: {:5f}'.format(sess.run(R2, feed_dict={X: overall_X,
                                                                                    y: overall_y,
