@@ -134,7 +134,7 @@ class ValvePresEval:
         plt.title('Pressure Ratio')
         plt.xlabel('Time')
         plt.ylabel('Pressure Ratio')
-        plt.scatter(time_axis, pres_ratio[time_start:time_end], color='blue')
+        plt.plot(time_axis, pres_ratio[time_start:time_end], color='blue')
 
         plt.ylim([0, 1])
 
@@ -142,11 +142,11 @@ class ValvePresEval:
 
         plt.title('Valve Position')
         plt.xlabel('Time')
-        plt.ylabel('Valve_Position')
+        plt.ylabel('Valve Position')
 
-        plt.scatter(time_axis, valve_pos[time_start:time_end], color='green')
-        plt.scatter(time_axis, self.upper[time_start:time_end], color='red')
-        plt.scatter(time_axis, self.lower[time_start:time_end], color='red')
+        plt.plot(time_axis, valve_pos[time_start:time_end], color='green', linewidth='3.5')
+        plt.plot(time_axis, self.upper[time_start:time_end], color='red', linewidth='2')
+        plt.plot(time_axis, self.lower[time_start:time_end], color='red', linewidth='2')
 
         plt.ylim([0, 60])
 
