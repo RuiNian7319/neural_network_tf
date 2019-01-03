@@ -14,6 +14,19 @@ import gc
 
 
 def limit_adder(x, y, predictions, axis='pressure'):
+    """
+    Inputs
+    ----
+              x: Feature vectors
+              y: Labels, y
+    predictions: Predicted labels, y_hat
+           axis: To generate limits based on pressure or valve position
+
+    Variables
+    ----
+          upper: Upper bound
+          lower: Lower bound
+    """
     upper = np.zeros(predictions.shape)
     lower = np.zeros(predictions.shape)
 
@@ -56,6 +69,9 @@ def limit_adder(x, y, predictions, axis='pressure'):
                 lower[i] = predictions[i] - 5
             else:
                 print("Value outside range")
+
+    else:
+        raise ValueError("Incorrect axis.  Choices are valve_pos and pressure.  You inputted {}.".format(axis))
 
     plt.scatter(x, y, color='grey')
     plt.scatter(x, upper, s=6, color='red')
