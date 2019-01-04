@@ -7,6 +7,7 @@ The following definitions are in the script:
     Suncor_early_pred: Evaluates the precision and recall of the ML model on all Suncor data
            live_plots: Plots 2 figures.  Top is prediction in plant, bottom is live plant data
                scaler: Scales predictions by the scaling factor
+        label_builder: Builds a label vector using index on and index off data
 """
 
 import numpy as np
@@ -74,7 +75,7 @@ def suncor_early_pred(predictions, labels, early_window, num_of_events, threshol
     return recall_overall, precision, not_detected, misfired, did_detect
 
 
-def live_plots(prediction, real_value, start, end, y=0.1):
+def live_plots(prediction, real_value, start, end, y=0.5):
 
     """
     Plots the real plant trajectory vs the predicted
@@ -119,3 +120,25 @@ def scaler(data, scale=26):
             data[i] = min(data[i] * scale, 1)
 
     return data
+
+
+def label_builder(index_data, total_data_length):
+    """
+    Inputs
+    ----
+           index_data: Index data for pressure
+    total_data_length: Total length of data vector
+
+    Returns
+    ----
+         label_vector: New label vector
+    """
+
+    label_vector = np.zeros(total_data_length)
+    for i, value in enumerate(index_data[:, 0]):
+        for j in range(int(index_data[i, 0] - value)):
+            label_vector[int(j + value)] = 1
+
+    return label_vector
+
+
