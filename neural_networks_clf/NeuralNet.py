@@ -3,7 +3,7 @@ Artificial Neural Network Code v1.0  (Feed-forward neural network)
 
 By:  Rui Nian
 
-Date of last edit: December 28th, 2018
+Date of last edit: January 3rd, 2018
 
 Patch notes: -
 
@@ -24,7 +24,7 @@ import pandas as pd
 import tensorflow as tf
 import pickle
 
-from suncor_ts_tester import suncor_early_pred
+from EVAL_NeuralNetClf import *
 
 import gc
 
@@ -74,8 +74,8 @@ class MinMaxNormalization:
 
 
 # Load data
-path = '/Users/ruinian/Documents/Willowglen/'
-# path = '/home/rui/Documents/logistic_regression_tf/'
+# path = '/Users/ruinian/Documents/Willowglen/'
+path = '/home/rui/Documents/Willowglen/'
 
 # raw_data = pd.read_csv(path + 'data/10_data_12.csv', header=None)
 raw_data = pd.read_csv(path + 'data/labeled_data.csv')
