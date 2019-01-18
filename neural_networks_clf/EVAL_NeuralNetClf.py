@@ -140,5 +140,3 @@ def label_builder(index_data, total_data_length):
             label_vector[int(j + value)] = 1
 
     return label_vector
-
-
